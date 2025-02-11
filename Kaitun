@@ -1,0 +1,185 @@
+--// Shinichi Hub - Kaitun Auto Farm Full (Level 1 to 10, Sky Island 200, Normal After 100, Auto Code x2 EXP)
+local ShinichiHub = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local TimeLabel = Instance.new("TextLabel")
+local ItemLabel = Instance.new("TextLabel")
+
+ShinichiHub.Name = "ShinichiHub"
+ShinichiHub.Parent = game.CoreGui
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ShinichiHub
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.4, 0, 0.1, 0)
+MainFrame.Size = UDim2.new(0, 300, 0, 150)
+
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.Text = "Shinichi Hub - Kaitun Auto Farm"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
+Title.TextScaled = true
+
+TimeLabel.Name = "TimeLabel"
+TimeLabel.Parent = MainFrame
+TimeLabel.Text = "Time: 0s"
+TimeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TimeLabel.Font = Enum.Font.SourceSans
+TimeLabel.Position = UDim2.new(0, 0, 0.3, 0)
+TimeLabel.Size = UDim2.new(1, 0, 0, 50)
+
+ItemLabel.Name = "ItemLabel"
+ItemLabel.Parent = MainFrame
+ItemLabel.Text = "Items Collected: 0"
+ItemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ItemLabel.Font = Enum.Font.SourceSans
+ItemLabel.Position = UDim2.new(0, 0, 0.6, 0)
+ItemLabel.Size = UDim2.new(1, 0, 0, 50)
+
+--// Variables
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local autoFarm = true
+local itemsToPickup = {"Mirror", "Sword", "CDK", "Soul Guitar"}
+local startTime = tick()
+local itemCount = 0
+local isSkyIsland = false
+
+--// List of available x2 EXP codes for 5 hours
+local x2ExpCodes = {
+    "SUB2GAMERROBOT_RESET1",
+    "SUB2GAMERROBOT_EXP1",
+    "SUB2NOOBMASTER123",
+    "SUB2UNSTOPPABLE",
+    "ENYU_IS_3RD",
+    "TantaiGaming",
+    "FUDD10",
+    "BIGNEWS"
+}
+
+--// Functions
+function teleportTo(position)
+    humanoidRootPart.CFrame = CFrame.new(position)
+end
+
+function findSpecificItems()
+    local items = {}
+    for _, item in pairs(game.Workspace:GetChildren()) do
+        if table.find(itemsToPickup, item.Name) then
+            table.insert(items, item)
+        end
+    end
+    return items
+end
+
+function getCurrentLevel()
+    return player.Data.Level.Value
+end
+
+function enterCode(code)
+    local success, message = pcall(function()
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetCode", code)
+    end)
+
+    if success then
+        print("Code entered successfully: " .. code)
+    else
+        print("Failed to enter code: " .. message)
+    end
+end
+
+function farmSkyIsland()
+    local skyIslandPosition = Vector3.new(600, 100, 600) -- Replace with actual Sky Island position
+    teleportTo(skyIslandPosition)
+    local level200Enemies = {} -- Define your enemies at level 200 here
+    for _, enemy in pairs(level200Enemies) do
+        teleportTo(enemy.HumanoidRootPart.Position)
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", enemy)
+        itemCount = itemCount + 1
+        ItemLabel.Text = "Items Collected: " .. itemCount
+        task.wait(1)
+    end
+end
+
+function farmItems()
+    while autoFarm do
+        if getCurrentLevel() < 100 then
+            -- Farm level 1-10 and then go to Sky Island
+            if getCurrentLevel() >= 1 and getCurrentLevel() < 10 then
+                -- Enter all available x2 EXP codes
+                for _, code in ipairs(x2ExpCodes) do
+                    enterCode(code)
+                    task.wait(1) -- Delay between code entries
+                end
+
+                local enemies = findSpecificItems()
+                for _, item in pairs(enemies) do
+                    teleportTo(item.Position)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", item)
+                    itemCount = itemCount + 1
+                    ItemLabel.Text = "Items Collected: " .. itemCount
+                    task.wait(1)
+                end
+            end
+            -- Transition to Sky Island at level 10
+            if getCurrentLevel() >= 10 and not isSkyIsland then
+                isSkyIsland = true
+                farmSkyIsland()
+            end
+        else
+            -- Farm normally after level 100
+            local items = findSpecificItems()
+            for _, item in pairs(items) do
+                teleportTo(item.Position)
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", item)
+                itemCount = itemCount + 1
+                ItemLabel.Text = "Items Collected: " .. itemCount
+                task.wait(1)
+            end
+        end
+        task.wait(5)
+    end
+end
+
+function autoUpgradeStats()
+    while autoFarm do
+        pcall(function()
+            local stats = player:WaitForChild("Data").Stats
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", 5)
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense", 5)
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Sword", 5)
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Demon Fruit", 5)
+        end)
+        task.wait(5)
+    end
+end
+
+function changeServer()
+    local tpService = game:GetService("TeleportService")
+    local placeId = game.PlaceId
+    tpService:Teleport(placeId, player)
+end
+
+function enableSafeMode()
+    player.Character.Humanoid.Died:Connect(function()
+        autoFarm = false
+        changeServer()
+    end)
+end
+
+function updateTime()
+    while autoFarm do
+        local elapsedTime = math.floor(tick() - startTime)
+        TimeLabel.Text = "Time: " .. elapsedTime .. "s"
+        task.wait(1)
+    end
+end
+
+--// Start Automation
+farmItems()
+autoUpgradeStats()
+updateTime()
+if true then enableSafeMode() end
