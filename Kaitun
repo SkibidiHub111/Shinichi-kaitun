@@ -1,185 +1,837 @@
---// Shinichi Hub - Kaitun Auto Farm Full (Level 1 to 10, Sky Island 200, Normal After 100, Auto Code x2 EXP)
-local ShinichiHub = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local TimeLabel = Instance.new("TextLabel")
-local ItemLabel = Instance.new("TextLabel")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StatsService = game:GetService("Stats")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
 
-ShinichiHub.Name = "ShinichiHub"
-ShinichiHub.Parent = game.CoreGui
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ShinichiHub
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Position = UDim2.new(0.4, 0, 0.1, 0)
-MainFrame.Size = UDim2.new(0, 300, 0, 150)
-
-Title.Name = "Title"
-Title.Parent = MainFrame
-Title.Text = "Shinichi Hub - Kaitun Auto Farm"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.Size = UDim2.new(1, 0, 0, 50)
-Title.BackgroundTransparency = 1
-Title.TextScaled = true
-
-TimeLabel.Name = "TimeLabel"
-TimeLabel.Parent = MainFrame
-TimeLabel.Text = "Time: 0s"
-TimeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TimeLabel.Font = Enum.Font.SourceSans
-TimeLabel.Position = UDim2.new(0, 0, 0.3, 0)
-TimeLabel.Size = UDim2.new(1, 0, 0, 50)
-
-ItemLabel.Name = "ItemLabel"
-ItemLabel.Parent = MainFrame
-ItemLabel.Text = "Items Collected: 0"
-ItemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-ItemLabel.Font = Enum.Font.SourceSans
-ItemLabel.Position = UDim2.new(0, 0, 0.6, 0)
-ItemLabel.Size = UDim2.new(1, 0, 0, 50)
-
---// Variables
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local autoFarm = true
-local itemsToPickup = {"Mirror", "Sword", "CDK", "Soul Guitar"}
-local startTime = tick()
-local itemCount = 0
-local isSkyIsland = false
-
---// List of available x2 EXP codes for 5 hours
-local x2ExpCodes = {
-    "SUB2GAMERROBOT_RESET1",
-    "SUB2GAMERROBOT_EXP1",
-    "SUB2NOOBMASTER123",
-    "SUB2UNSTOPPABLE",
-    "ENYU_IS_3RD",
-    "TantaiGaming",
-    "FUDD10",
-    "BIGNEWS"
-}
-
---// Functions
-function teleportTo(position)
-    humanoidRootPart.CFrame = CFrame.new(position)
-end
-
-function findSpecificItems()
-    local items = {}
-    for _, item in pairs(game.Workspace:GetChildren()) do
-        if table.find(itemsToPickup, item.Name) then
-            table.insert(items, item)
+pcall(function()
+    for _, v in pairs(CoreGui:GetChildren()) do
+        if v:IsA("ScreenGui") and v.Name == "CrystalHubUI" then
+            v:Destroy()
         end
     end
-    return items
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CrystalHubUI"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(1, 0, 1, 0)
+Frame.Position = UDim2.new(0, 0, 0, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.3
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0.15, 0)
+Title.Position = UDim2.new(0, 0, 0.35, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Crystal Hub"
+Title.TextColor3 = Color3.fromRGB(225, 222, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.FredokaOne
+Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.TextYAlignment = Enum.TextYAlignment.Center
+Title.Parent = Frame
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, 0, 0.08, 0)
+StatusLabel.Position = UDim2.new(0, 0, 0.55, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: https://discord.gg/9HMr3sCZnZ"
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+StatusLabel.TextScaled = true
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+StatusLabel.TextYAlignment = Enum.TextYAlignment.Center
+StatusLabel.Parent = Frame
+
+local StatsLabel = Instance.new("TextLabel")
+StatsLabel.Size = UDim2.new(1, 0, 0.06, 0)
+StatsLabel.Position = UDim2.new(0, 0, 0.65, 0)
+StatsLabel.BackgroundTransparency = 1
+StatsLabel.Text = "FPS: 0 | Players: 0 | Ping: 0ms"
+StatsLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+StatsLabel.TextScaled = true
+StatsLabel.Font = Enum.Font.GothamBold
+StatsLabel.TextXAlignment = Enum.TextXAlignment.Center
+StatsLabel.TextYAlignment = Enum.TextYAlignment.Center
+StatsLabel.Parent = Frame
+
+local lastTime = tick()
+RunService.RenderStepped:Connect(function()
+    local now = tick()
+    local dt = now - lastTime
+    lastTime = now
+    local fps = math.floor(1 / dt)
+    local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
+    local count = #Players:GetPlayers()
+    StatsLabel.Text = string.format("FPS: %d | Players: %d | Ping: %dms", fps, count, ping)
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local AC = getgenv().AutoCyborg or {}
+
+local function UpdateStatus(text)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Auto Cyborg",
+            Text = text,
+            Duration = 3
+        })
+    end)
 end
 
-function getCurrentLevel()
-    return player.Data.Level.Value
+local function http_request(tbl)
+    local r = request or (syn and syn.request) or (http and http.request) or http_request
+    if r then return r(tbl) end
 end
 
-function enterCode(code)
-    local success, message = pcall(function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetCode", code)
+local function sendWebhook(statusText)
+    local cfg = AC["Webhook"]
+    if not cfg or not cfg["Enable"] or cfg["Url"] == "" then return end
+    local content = ""
+    if cfg["PingEveryoneWhenDone"] and statusText:find("Done all") then
+        content = "@everyone"
+    end
+    local data = {
+        username = "Crystal Hub",
+        embeds = {{
+            title = "Crystal Hub Auto Cyborg",
+            color = 65280,
+            fields = {
+                {name = "User", value = LocalPlayer.Name, inline = false},
+                {name = "Status", value = statusText, inline = false}
+            }
+        }},
+        content = content
+    }
+    pcall(function()
+        http_request({
+            Url = cfg["Url"],
+            Body = HttpService:JSONEncode(data),
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"}
+        })
+    end)
+end
+
+local function getChar()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local function getHRP()
+    return getChar():WaitForChild("HumanoidRootPart")
+end
+
+local function IsPlayerAlive()
+    local hum = getChar():FindFirstChildOfClass("Humanoid")
+    return hum and hum.Health > 0
+end
+
+RunService.Stepped:Connect(function()
+    local char = getChar()
+    if char then
+        for _, v in ipairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    task.wait(2)
+    local team = AC["Team"]
+    if team == "Marines" or team == "Pirates" then
+        pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", team) end)
+    end
+end)
+
+task.wait(5)
+
+local ChestCooldown = {}
+
+local function keyFromVector3(v)
+    local function r(x) return math.floor(x*10+0.5)/10 end
+    return string.format("%.1f,%.1f,%.1f", r(v.X), r(v.Y), r(v.Z))
+end
+
+local function onCooldown(v3)
+    local k = keyFromVector3(v3)
+    local t = ChestCooldown[k]
+    return t and (t > os.clock())
+end
+
+local function setCooldown(v3, secs)
+    ChestCooldown[keyFromVector3(v3)] = os.clock() + secs
+end
+
+ local function getChests()
+    
+    local list = {}
+    for _, inst in ipairs(workspace:GetDescendants()) do
+        if inst:IsA("BasePart")
+        and inst.Parent
+        and string.lower(inst.Name):find("chest")
+        and not onCooldown(inst.Position) then
+            table.insert(list, inst)
+        end
+    end
+    table.sort(list,function(a,b)
+        return (a.Position-getHRP().Position).Magnitude < (b.Position-getHRP().Position).Magnitude
+    end)
+    return list
+end
+
+local function tweenTo(targetPos)
+    local hrp = getHRP()
+    if not hrp then return end
+    local dist = (hrp.Position - targetPos).Magnitude
+    local duration = math.max(dist / AC["TweenSpeed"], 0.25)
+    local tween = TweenService:Create(
+        hrp,
+        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        {CFrame = CFrame.new(targetPos)}
+    )
+    tween:Play()
+
+    local done=false
+    tween.Completed:Connect(function() done=true end)
+
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        if not hrp or not hrp.Parent then
+            conn:Disconnect()
+            done = true
+            return
+        end
+        hrp.Velocity = Vector3.new(0,0,0)
     end)
 
-    if success then
-        print("Code entered successfully: " .. code)
-    else
-        print("Failed to enter code: " .. message)
+    repeat task.wait() until done
+    conn:Disconnect()
+end
+
+local function moveToChest(chest)
+    if not chest or not chest.Parent then return end
+    local hrp = getHRP()
+    local targetY = chest.Position.Y + 6
+    tweenTo(Vector3.new(hrp.Position.X, targetY + 12, hrp.Position.Z))
+    task.wait(0.05)
+    if chest and chest.Parent then
+        tweenTo(Vector3.new(chest.Position.X, targetY, chest.Position.Z))
     end
 end
 
-function farmSkyIsland()
-    local skyIslandPosition = Vector3.new(600, 100, 600) -- Replace with actual Sky Island position
-    teleportTo(skyIslandPosition)
-    local level200Enemies = {} -- Define your enemies at level 200 here
-    for _, enemy in pairs(level200Enemies) do
-        teleportTo(enemy.HumanoidRootPart.Position)
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", enemy)
-        itemCount = itemCount + 1
-        ItemLabel.Text = "Items Collected: " .. itemCount
+local function touchChest(part)
+    if not part or not part.Parent then return end
+    local hrp = getHRP()
+    pcall(function()
+        firetouchinterest(hrp, part, 0)
+        task.wait(0.05)
+        firetouchinterest(hrp, part, 1)
+    end)
+end
+
+local function hasKey()
+    return LocalPlayer.Backpack:FindFirstChild("Fist of Darkness") or LocalPlayer.Character:FindFirstChild("Fist of Darkness")
+end
+
+local function getMessageType()
+    local gui = LocalPlayer:WaitForChild("PlayerGui")
+    for _, scr in pairs(gui:GetDescendants()) do
+        if (scr:IsA("TextLabel") or scr:IsA("TextButton")) and scr.Text then
+            if scr.Text:find("Không tìm thấy con Chip") or scr.Text:find("Microchip not found") then
+                return "NoChip"
+            elseif scr.Text:find("Core Brain") or scr.Text:find("Lõi Rô%-bốt") then
+                return "NeedCoreBrain"
+            end
+        end
+    end
+    return nil
+end
+
+local function startLawRaid()
+    UpdateStatus("Need Core Brain - Starting Law Raid")
+    sendWebhook("Need Core Brain - Starting Law Raid")
+    if not (LocalPlayer.Backpack:FindFirstChild("Core Brain") or LocalPlayer.Character:FindFirstChild("Lõi Rô-bốt")) then
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BlackbeardReward","Microchip","2")
+    end
+    local btn = workspace.Map.CircleIsland.RaidSummon.Button.Main.ClickDetector
+    for i = 1, 4 do
+        fireclickdetector(btn)       
+        game.ReplicatedStorage.Remotes.CommF_:InvokeServer("CyborgTrainer", "Buy")
+        task.wait(0.2)
+    end
+end
+
+local function IsCyborg()
+    local success, CyborgCheck = pcall(function()
+        return ReplicatedStorage.Remotes.CommF_:InvokeServer("CyborgTrainer", "Check")
+    end)
+    return success and CyborgCheck == 2
+end
+
+local function TeleportWorld(world)
+    local pid = game.PlaceId
+    if world == 1 and pid ~= 2753915549 then TeleportService:Teleport(2753915549, LocalPlayer) return end
+    if world == 2 and pid ~= 4442272183 then TeleportService:Teleport(4442272183, LocalPlayer) return end
+    if world == 3 and pid ~= 7449423635 then TeleportService:Teleport(7449423635, LocalPlayer) return end
+end
+
+local function InSea2() return game.PlaceId == 4442272183 end
+local function HopServer()
+    local Http = game:GetService("HttpService")
+    local PlaceId = game.PlaceId
+    local JobId = game.JobId
+    local Servers = {}
+
+    local function ListServers(cursor)
+        local url = ("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Asc&limit=100%s"):format(PlaceId, cursor and "&cursor="..cursor or "")
+        local response = game:HttpGet(url)
+        return Http:JSONDecode(response)
+    end
+
+    local function TP()
+        for _, v in ipairs(Servers) do
+            if v.id ~= JobId and v.playing < v.maxPlayers then
+                TeleportService:TeleportToPlaceInstance(PlaceId, v.id, LocalPlayer)
+                return true
+            end
+        end
+        return false
+    end
+
+    local cursor
+    repeat
+        local data = ListServers(cursor)
+        for _, v in ipairs(data.data) do
+            table.insert(Servers, v)
+        end
+        cursor = data.nextPageCursor
+    until not cursor or #Servers >= 200
+
+    if not TP() then
+        warn("No available server found, retrying...")
+        task.wait(2)
+        HopServer()
+    end
+end
+
+local function checkInventory(name)
+    local alias = {
+        ["Flower 1"] = {"Flower 1","Red Flower"},
+        ["Flower 2"] = {"Flower 2","Blue Flower"},
+        ["Flower 3"] = {"Flower 3","Yellow Flower"}
+    }
+    local targets = alias[name] or {name}
+    for _, t in ipairs(targets) do
+        if LocalPlayer.Backpack:FindFirstChild(t) or getChar():FindFirstChild(t) then
+            return true
+        end
+    end
+    return false
+end
+
+local function EquipMelee()
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+        for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool.ToolTip == "Melee" then
+                tool.Parent = LocalPlayer.Character
+                break
+            end
+        end
+    end)
+end
+
+local function FindNearestEnemyByName(name)
+    local nearest, dist = nil, math.huge
+    for _, m in ipairs(workspace.Enemies:GetChildren()) do
+        if m.Name == name and m:FindFirstChild("HumanoidRootPart") and m:FindFirstChildOfClass("Humanoid") and m.Humanoid.Health > 0 then
+            local d = (m.HumanoidRootPart.Position - getHRP().Position).Magnitude
+            if d < dist then
+                dist = d
+                nearest = m
+            end
+        end
+    end
+    return nearest
+end
+
+local function KillMobList(list)
+    EquipMelee()
+    for _, nm in ipairs(list) do
+        local startTime = os.clock()
+        while os.clock() - startTime < 90 and not checkInventory("Flower 3") and IsPlayerAlive() do
+            local mob = FindNearestEnemyByName(nm)
+            if not mob then task.wait(0.3) continue end
+            local hrp = mob:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                tweenTo(hrp.Position + Vector3.new(0, 3, 0))
+                pcall(function() mouse1click() end)
+            end
+            task.wait(0.2)
+        end
+        if checkInventory("Flower 3") then break end
+    end
+end
+
+local function AutoRaceV2()
+    UpdateStatus("Starting Race V2 Quest")
+    sendWebhook("Starting Race V2 Quest")
+    EquipMelee()
+    if not InSea2() then
+        repeat TeleportWorld(2) task.wait(3) until InSea2()
+    end
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("Alchemist", "1")
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("Alchemist", "2")
+    while AC["Enable"] ~= false and IsPlayerAlive() do
+        if checkInventory("Flower 1") and checkInventory("Flower 2") and checkInventory("Flower 3") then
+            ReplicatedStorage.Remotes.CommF_:InvokeServer("Alchemist", "3")
+            UpdateStatus("Race V2 Upgrade Complete")
+            sendWebhook("Race V2 Upgrade Complete")
+            task.wait(2)
+            AutoRaceV3()
+            break
+        end
+        if not checkInventory("Flower 1") then
+            local f1 = workspace:FindFirstChild("Flower1")
+            if f1 and f1:IsA("BasePart") and f1.Transparency ~= 1 then
+                moveToChest(f1) 
+                touchChest(f1)
+            else HopServer() end
+        elseif not checkInventory("Flower 2") then
+            local f2 = workspace:FindFirstChild("Flower2")
+            if f2 and f2:IsA("BasePart") then
+                moveToChest(f2) 
+                touchChest(f2)
+            else HopServer() end
+        elseif not checkInventory("Flower 3") then
+            KillMobList({"Swan Pirate"})
+        end
         task.wait(1)
     end
 end
 
-function farmItems()
-    while autoFarm do
-        if getCurrentLevel() < 100 then
-            -- Farm level 1-10 and then go to Sky Island
-            if getCurrentLevel() >= 1 and getCurrentLevel() < 10 then
-                -- Enter all available x2 EXP codes
-                for _, code in ipairs(x2ExpCodes) do
-                    enterCode(code)
-                    task.wait(1) -- Delay between code entries
-                end
-
-                local enemies = findSpecificItems()
-                for _, item in pairs(enemies) do
-                    teleportTo(item.Position)
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", item)
-                    itemCount = itemCount + 1
-                    ItemLabel.Text = "Items Collected: " .. itemCount
-                    task.wait(1)
+function AutoRaceV3()
+    UpdateStatus("Starting Race V3 Quest")
+    sendWebhook("Starting Race V3 Quest")
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
+    task.wait(1)
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
+    if LocalPlayer.Data.Race.Value == "Cyborg" and not LocalPlayer.PlayerGui.Main.Timer.Visible then
+        local foundFruit = false
+        repeat
+            for _, container in ipairs({LocalPlayer.Backpack:GetChildren(), LocalPlayer.Character:GetChildren()}) do
+                for _, item in ipairs(container) do
+                    if string.find(item.Name, "Fruit") then
+                        foundFruit = true
+                        break
+                    end
                 end
             end
-            -- Transition to Sky Island at level 10
-            if getCurrentLevel() >= 10 and not isSkyIsland then
-                isSkyIsland = true
-                farmSkyIsland()
+            task.wait(1)
+        until foundFruit
+        local result = ReplicatedStorage.Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
+        if result ~= -2 then
+            UpdateStatus("Race V3 Upgrade Complete")
+            sendWebhook("Race V3 Upgrade Complete")
+        else
+            UpdateStatus("Race V3 Upgrade Failed / Cooldown")
+            sendWebhook("Race V3 Upgrade Failed / Cooldown")
+        end
+    end
+end
+
+task.spawn(function()
+    if IsCyborg() then
+        UpdateStatus("Already Cyborg - Skip chest & Law raid, start Race V2")
+        sendWebhook("Already Cyborg - Skip chest & Law raid, start Race V2")
+        AutoRaceV2()
+        return
+    end
+    UpdateStatus("Not Cyborg yet - Starting Auto Cyborg")
+    sendWebhook("Not Cyborg yet - Starting Auto Cyborg")
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("CyborgTrainer", "Check")
+    while (AC["Enable"] ~= false) do
+        local success, CyborgCheck = pcall(function()
+            return ReplicatedStorage.Remotes.CommF_:InvokeServer("CyborgTrainer", "Check")
+        end)
+        if success and CyborgCheck == 2 then
+            UpdateStatus("Already Cyborg - Done all!")
+            sendWebhook("Already Cyborg - Done all!")
+            AutoRaceV2()
+            break
+        end
+        EquipMelee()
+        if not hasKey() then
+            local btn = workspace.Map.CircleIsland.RaidSummon.Button.Main.ClickDetector
+            pcall(function() fireclickdetector(btn) task.wait(0.1) fireclickdetector(btn) end)
+            task.wait(0.3)
+            local msgType = getMessageType()
+            if msgType == "NoChip" then
+                local chests = getChests()
+                if #chests < (AC["HopServerIfChest"] or 0) then
+                    UpdateStatus("Too few chests ("..#chests.."), hopping server...")
+                    sendWebhook("Too few chests ("..#chests.."), hopping server...")
+                    HopServer()
+                    return
+                end
+                if #chests > 0 then
+                    UpdateStatus("Collecting chests ("..#chests..")")
+                    sendWebhook("Collecting chests ("..#chests..")")
+                end
+                for _, chest in ipairs(chests) do
+                    if chest and chest.Parent then
+                        moveToChest(chest)
+                        if chest and chest.Parent then
+                            touchChest(chest)
+                            setCooldown(chest.Position,60)
+                        end
+                        task.wait(0.05)
+                    end
+                end
+            elseif msgType == "NeedCoreBrain" then
+                startLawRaid()
             end
         else
-            -- Farm normally after level 100
-            local items = findSpecificItems()
-            for _, item in pairs(items) do
-                teleportTo(item.Position)
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PickUpItem", item)
-                itemCount = itemCount + 1
-                ItemLabel.Text = "Items Collected: " .. itemCount
-                task.wait(1)
+            local keyTool = LocalPlayer.Backpack:FindFirstChild("Fist of Darkness")
+            if keyTool and not LocalPlayer.Character:FindFirstChild("Fist of Darkness") then
+                keyTool.Parent = LocalPlayer.Character
+                task.wait(0.1)
             end
+            local btn = workspace.Map.CircleIsland.RaidSummon.Button.Main.ClickDetector
+            for i = 1, 4 do fireclickdetector(btn) task.wait(0.2) end
+            UpdateStatus("Got Key Start law raid")
+            sendWebhook("Got Key Start law raid")
+            break
         end
-        task.wait(5)
-    end
-end
-
-function autoUpgradeStats()
-    while autoFarm do
-        pcall(function()
-            local stats = player:WaitForChild("Data").Stats
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", 5)
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense", 5)
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Sword", 5)
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Demon Fruit", 5)
-        end)
-        task.wait(5)
-    end
-end
-
-function changeServer()
-    local tpService = game:GetService("TeleportService")
-    local placeId = game.PlaceId
-    tpService:Teleport(placeId, player)
-end
-
-function enableSafeMode()
-    player.Character.Humanoid.Died:Connect(function()
-        autoFarm = false
-        changeServer()
-    end)
-end
-
-function updateTime()
-    while autoFarm do
-        local elapsedTime = math.floor(tick() - startTime)
-        TimeLabel.Text = "Time: " .. elapsedTime .. "s"
         task.wait(1)
     end
+end)
+
+do
+	ply = game["Players"]
+	plr = ply["LocalPlayer"]
+	Root = plr["Character"]["HumanoidRootPart"]
+	replicated = game:GetService("ReplicatedStorage")
+	Lv = game["Players"]["LocalPlayer"]["Data"]["Level"]["Value"]
+	TeleportService = game:GetService("TeleportService")
+	TW = game:GetService("TweenService")
+	Lighting = game:GetService("Lighting")
+	Enemies = workspace["Enemies"]
+	vim1 = game:GetService("VirtualInputManager")
+	vim2 = game:GetService("VirtualUser")
+	TeamSelf = plr["Team"]
+	RunSer = game:GetService("RunService")
+	Stats = game:GetService("Stats")
+	Energy = plr["Character"]["Energy"]["Value"]
+	Boss = {}
+	BringConnections = {}
+	MaterialList = {}
+	NPCList = {}
+	shouldTween = false
+	SoulGuitar = false
+	KenTest = true
+	debug = false
+	Brazier1 = false
+	Brazier2 = false
+	Brazier3 = false
+	Sec = .1
+	ClickState = 0
+	Num_self = 25
+end
+local Ec = game["Players"]["LocalPlayer"]
+local CombatUtil = require(game.ReplicatedStorage.Modules.CombatUtil)
+hookfunction(CombatUtil.GetComboPaddingTime, function(...)
+	return 0 
+end)
+hookfunction(CombatUtil.GetAttackCancelMultiplier, function(...)
+	return 0 
+end)
+hookfunction(CombatUtil.CanAttack, function(...)
+	return true 
+end)
+local function Bc(x)
+	if not x then
+		return false
+	end
+	local L = x:FindFirstChild("Humanoid")
+	return L and L["Health"] > 0
+end
+local function Pc(x, L)
+	local a = (game:GetService("Workspace"))["Enemies"]:GetChildren()
+	local V = (game:GetService("Players")):GetPlayers()
+	local H = {}
+	local r = (x:GetPivot())["Position"]
+	for x, a in ipairs(a) do
+		local V = a:FindFirstChild("HumanoidRootPart")
+		if V and Bc(a) then
+			local x = (V["Position"] - r)["Magnitude"]
+			if x <= L then
+				table["insert"](H, a)
+			end
+		end
+	end
+	for x, a in ipairs(V) do
+		if a ~= Ec and a["Character"] then
+			local x = a["Character"]:FindFirstChild("HumanoidRootPart")
+			if x and Bc(a["Character"]) then
+				local V = (x["Position"] - r)["Magnitude"]
+				if V <= L then
+					table["insert"](H, a["Character"])
+				end
+			end
+		end
+	end
+	return H
+end
+function AttackNoCoolDown()
+	local x = (game:GetService("Players"))["LocalPlayer"]
+	local L = x["Character"]
+	if not L then
+		return
+	end
+	local a = nil
+	for x, L in ipairs(L:GetChildren()) do
+		if L:IsA("Tool") then
+			a = L
+			break
+		end
+	end
+	if not a then
+		return
+	end
+	local V = Pc(L, 100)
+	if #V == 0 then
+		return
+	end
+	local H = game:GetService("ReplicatedStorage")
+	local r = H:FindFirstChild("Modules")
+	if not r then
+		return
+	end
+	local R = ((H:WaitForChild("Modules")):WaitForChild("Net")):WaitForChild("RE/RegisterAttack")
+	local y = ((H:WaitForChild("Modules")):WaitForChild("Net")):WaitForChild("RE/RegisterHit")
+	if not R or not y then
+		return
+	end
+	local l, M = {}, nil
+	for x, L in ipairs(V) do
+		if not L:GetAttribute("IsBoat") then
+			local x = {
+				"RightLowerArm",
+				"RightUpperArm",
+				"LeftLowerArm";
+				"LeftUpperArm",
+				"RightHand",
+				"LeftHand"
+			}
+			local a = L:FindFirstChild(x[math["random"](#x)]) or L["PrimaryPart"]
+			if a then
+				table["insert"](l, {
+					L,
+					a
+				})
+				M = a
+			end
+		end
+	end
+	if not M then
+		return
+	end
+	R:FireServer(0)
+	local n = x:FindFirstChild("PlayerScripts")
+	if not n then
+		return
+	end
+	local b = n:FindFirstChildOfClass("LocalScript")
+	while not b do
+		n["ChildAdded"]:Wait()
+		b = n:FindFirstChildOfClass("LocalScript")
+	end
+	local Z
+	if getsenv then
+		local x, L = pcall(getsenv, b)
+		if x and L then
+			Z = L["_G"]["SendHitsToServer"]
+		end
+	end
+	local q, I = pcall(function()
+		return (require(r["Flags"]))["COMBAT_REMOTE_THREAD"] or false
+	end)
+	if q and (I and Z) then
+		Z(M, l)
+	elseif q and not I then
+		y:FireServer(M, l)
+	end
+end
+CameraShakerR = require(game["ReplicatedStorage"]["Util"]["CameraShaker"])
+CameraShakerR:Stop()
+get_Monster = function()
+	for x, L in pairs(workspace["Enemies"]:GetChildren()) do
+		local a = L:FindFirstChild("UpperTorso") or L:FindFirstChild("Head")
+		if L:FindFirstChild("HumanoidRootPart", true) and a then
+			if (L["Head"]["Position"] - plr["Character"]["HumanoidRootPart"]["Position"])["Magnitude"] <= 50 then
+				return true, a["Position"]
+			end
+		end
+	end
+	for x, L in pairs(workspace["SeaBeasts"]:GetChildren()) do
+		if L:FindFirstChild("HumanoidRootPart") and (L:FindFirstChild("Health") and L["Health"]["Value"] > 0) then
+			return true, L["HumanoidRootPart"]["Position"]
+		end
+	end
+	for x, L in pairs(workspace["Enemies"]:GetChildren()) do
+		if L:FindFirstChild("Health") and (L["Health"]["Value"] > 0 and L:FindFirstChild("VehicleSeat")) then
+			return true, L["Engine"]["Position"]
+		end
+	end
+end
+Actived = function()
+	local x = game["Players"]["LocalPlayer"]["Character"]:FindFirstChildOfClass("Tool")
+	for x, L in next, getconnections(x["Activated"]) do
+		if typeof(L["Function"]) == "function" then
+			getupvalues(L["Function"])
+		end
+	end
+end
+task["spawn"](function()
+	RunSer["Heartbeat"]:Connect(function()
+		pcall(function()
+			if not _G["Seriality"] then
+				return
+			end
+			AttackNoCoolDown()
+			local x = game["Players"]["LocalPlayer"]["Character"]:FindFirstChildOfClass("Tool")
+			local L = x["ToolTip"]
+			local a, V = get_Monster()
+			if L == "Blox Fruit" then
+				if a then
+					local L = x:FindFirstChild("LeftClickRemote")
+					if L then
+						Actived()
+						L:FireServer(Vector3["new"](.01, -500, .01), 1, true)
+						L:FireServer(false)
+					end
+				end
+			end
+		end)
+	end)
+end)
+
+_G["Seriality"] = true
+local FastAttack = {}
+local folders = {
+    workspace.Enemies,
+    workspace.Characters
+}
+local Modules = game.ReplicatedStorage:WaitForChild("Modules")
+local RE_Attack = Modules.Net:WaitForChild("RE/RegisterAttack")
+local RunHitDetection
+local HIT_FUNCTION
+task.defer(function()
+    local success, Env = pcall(getsenv, game:GetService("ReplicatedStorage").Modules.CombatUtil)
+    if success and Env then
+        print("OK")
+        HIT_FUNCTION = Env._G.SendHitsToServer
+    end
+    local success2, module = pcall(require, Modules:WaitForChild("CombatUtil"))
+    if success2 and module then
+        RunHitDetection = module.RunHitDetection
+    end
+end)
+function FastAttack:IsAlive(v)
+    return v and not v:FindFirstChild("VehicleSeat") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart")
+end
+function FastAttack:GetDistance(x,xx)
+    return ((typeof(x) == "Vector3" and CFrame.new(x) or x).Position - (xx == nil and game.Players.LocalPlayer.Character.PrimaryPart or (typeof(xx) == "Vector3" and Vector3.new(xx) or xx)).Position).Magnitude
+end
+function FastAttack:GetHits()
+    local Hits = {}
+    for i,v in next, workspace.Enemies:GetChildren() do
+        if self:IsAlive(v) and self:GetDistance(v.HumanoidRootPart.Position) <= 60 then
+            table.insert(Hits, v)
+        end
+    end
+    return Hits
+end
+function FastAttack:GetRandomHitbox(v)
+    local HitBox =  {
+        "RightLowerArm", 
+        "RightUpperArm", 
+        "LeftLowerArm", 
+        "LeftUpperArm", 
+        "RightHand", 
+        "LeftHand",
+        "HumanoidRootPart",
+        "Head"
+    }
+    return v:FindFirstChild(HitBox[math.random(1, #HitBox)]) or v.HumanoidRootPart
+end
+function FastAttack:SuperFastAttack()
+    local BladeHits = self:GetHits()
+    local realenemy
+    if #BladeHits == 0 then return end
+    local Args = {[1] = nil, [2] = {}}
+    for _,v in next, BladeHits do
+        if not Args[1] then
+            Args[1] = self:GetRandomHitbox(v)
+        end
+        Args[2][#Args[2] + 1] = {
+            [1] = v,
+            [2] = self:GetRandomHitbox(v)
+        }
+        realenemy = v
+    end
+    if not Args[2] then Args[2] = {realenemy} end
+    Args[2][#Args[2] + 1] = realenemy
+    RE_Attack:FireServer(0)
+    if HIT_FUNCTION then
+        HIT_FUNCTION(unpack(Args))
+    end
+end
+function FastAttack:RunHitboxFastAttack()
+    local Tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if not Tool then return end
+    local success, hitResult, overlapParams, group1, group2 = pcall(function()
+        return RunHitDetection(game.Players.LocalPlayer.Character, Tool)
+    end)
+    
+    if not success or not hitResult or type(hitResult) ~= "table" then return end
+    if #hitResult == 0 then return end
+
+    local Args = {[1] = nil, [2] = {}}
+    for _, target in ipairs(hitResult) do
+        if self:IsAlive(target) then
+            local hitPart = self:GetRandomHitbox(target)
+            if not Args[1] then Args[1] = hitPart end
+            table.insert(Args[2], {target, hitPart})
+        end
+    end
+
+    if #Args[2] > 0 then
+        RE_Attack:FireServer(0)
+        if HIT_FUNCTION then
+            HIT_FUNCTION(unpack(Args))
+        end
+    end
 end
 
---// Start Automation
-farmItems()
-autoUpgradeStats()
-updateTime()
-if true then enableSafeMode() end
+while task.wait(0.005) do
+    pcall(function()
+        FastAttack:SuperFastAttack()
+		FastAttack:RunHitboxFastAttack()
+    end)
+end
